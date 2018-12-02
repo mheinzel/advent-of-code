@@ -2,8 +2,25 @@ module Main where
 
 import Test.HUnit
 
+import qualified Data.Set as Set
+import qualified Data.Map as Map
+import Data.List
+
 one :: String -> Int
-one = const 0
+one
+  = product
+  . traverse (Map.findWithDefault 0) [2,3]
+  . Map.unionsWith (+)
+  . map (count . occurences)
+  . lines
+
+occurences :: String -> Set.Set Int
+occurences =
+  Set.fromList . Map.elems . count
+
+count :: (Foldable f, Ord a) => f a -> Map.Map a Int
+count =
+  foldl' (\m k -> Map.insertWith (+) k 1 m) Map.empty
 
 two :: String -> Int
 two = const 0
@@ -26,7 +43,18 @@ runTests name f ts =
           assertEqual (show input) expected (f input)
 
 fooTests =
-  []
+  [ ( unlines
+        [ "abcdef"
+        , "bababc"
+        , "abbcde"
+        , "abcccd"
+        , "aabcdd"
+        , "abcdee"
+        , "ababab"
+        ]
+    , 12
+    )
+  ]
 
 barTests =
   []
