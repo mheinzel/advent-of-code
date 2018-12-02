@@ -4,6 +4,7 @@ import Test.HUnit
 
 import qualified Data.Set as Set
 import qualified Data.Map as Map
+import Data.Maybe
 import Data.List
 
 one :: String -> Int
@@ -15,15 +16,33 @@ one
   . lines
 
 occurences :: String -> Set.Set Int
-occurences =
-  Set.fromList . Map.elems . count
+occurences
+  = Set.fromList . Map.elems . count
 
 count :: (Foldable f, Ord a) => f a -> Map.Map a Int
-count =
-  foldl' (\m k -> Map.insertWith (+) k 1 m) Map.empty
+count
+  = foldl' (\m k -> Map.insertWith (+) k 1 m) Map.empty
 
-two :: String -> Int
-two = const 0
+two :: String -> String
+two
+  = maybe "" (uncurry (++))
+  . firstDuplicate
+  . foldMap cuts
+  . lines
+
+cuts :: String -> [(String, String)]
+cuts xs
+  = zip (inits xs) (drop 1 (tails xs))
+
+firstDuplicate :: Ord a => [a] -> Maybe a
+firstDuplicate = go Set.empty
+  where
+    go set (x:xs)
+      | x `Set.member` set = Just x
+      | otherwise = go (Set.insert x set) xs
+    go _ []
+      = Nothing
+
 
 main = do
   runTests "one" one fooTests
