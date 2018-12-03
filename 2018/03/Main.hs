@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections #-}
 module Main where
 
 import Test.HUnit
@@ -7,20 +8,27 @@ import qualified Data.Set as Set
 import qualified Data.Map as Map
 import Data.Maybe
 import Data.List
+import Data.Foldable
 import qualified Text.Parsec as P
 import Text.Parsec.String (Parser)
+import Safe
 
--- one :: String -> Int
+one :: String -> Int
 one
-  = length . Map.filter (> 1) . count . foldMap affectedTiles . parseClaims
+  = length . Map.filter ((> 1) . length)
+  . aggregate
+  . foldMap affectedTiles
+  . parseClaims
 
-count :: (Foldable f, Ord a) => f a -> Map.Map a Int
-count
-  = foldl' (\m k -> Map.insertWith (+) k 1 m) Map.empty
+aggregate :: (Ord k, Ord v) => [(k, v)] -> Map.Map k (Set.Set v)
+aggregate
+  = Map.unionsWith Set.union
+  . map (uncurry Map.singleton . fmap Set.singleton)
 
-affectedTiles :: Claim -> [(Int, Int)]
+affectedTiles :: Claim -> [((Int, Int), Int)]
 affectedTiles Claim{..}
-  = (,) <$> take sizeX [posX..] <*> take sizeY [posY..]
+  = map (, claimId) $
+      (,) <$> take sizeX [posX..] <*> take sizeY [posY..]
 
 data Claim
   = Claim { claimId, posX, posY, sizeX, sizeY :: !Int }
@@ -49,9 +57,18 @@ claimP
 
 
 
-two :: String -> Int
-two
-  = const 0
+two :: String -> [Int]
+two str
+  = Set.toList
+  . Set.difference (Set.fromList (map claimId claims))
+  . fold . Map.elems
+  . Map.filter ((> 1) . length)
+  . aggregate
+  . foldMap affectedTiles
+  $ claims
+
+  where
+    claims = parseClaims str
 
 main = do
   runTests "one" one oneTests
