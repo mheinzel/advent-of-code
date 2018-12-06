@@ -27,7 +27,7 @@ parse = map parseLine . lines
           (read str1, read str2)
 
 one :: String -> Int
-one 
+one
   = largest . removeInfinites . closests . parse
 
 bounds = (400,400)
@@ -83,13 +83,24 @@ largest
 
 two :: String -> Int
 two
-  = const 0
+  = length . filter (< 10000)
+  . Arr.elems . totalDistances
+  . parse
+
+totalDistances :: [Coord] -> Arr.Array Coord Int
+totalDistances coords
+  = Arr.listArray ((0,0), bounds) $
+      totalDistance coords <$> liftA2 (,) [0 .. fst bounds] [0 .. snd bounds]
+
+totalDistance :: [Coord] -> Coord -> Int
+totalDistance coords to
+  = sum $ map (distance to) coords
 
 main = do
   runTests "one" one oneTests
   runTests "two" two twoTests
   input <- readFile "input.txt"
-  print $ one input
+  -- print $ one input
   print $ two input
 
 oneTests =
