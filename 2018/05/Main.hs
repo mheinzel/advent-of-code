@@ -13,7 +13,8 @@ import Safe
 
 one :: String -> Int
 one
-  = length . reduce . filter Char.isAlpha
+  = length . reduce
+  . filter Char.isAlpha
 
 reduce :: [Char] -> [Char]
 reduce = flip foldl' [] $ \case
@@ -31,27 +32,14 @@ react x y
 
 two :: String -> Int
 two
-  = const 0
+  = minimum . map (length . reduce)
+  . simplifications
+  . filter Char.isAlpha
 
-main = do
-  runTests "one" one oneTests
-  runTests "two" two twoTests
-  input <- readFile "input.txt"
-  print $ one input
-  print $ two input
+simplifications :: [Char] -> [[Char]]
+simplifications
+  = traverse simplify ['a'..'z']
 
-oneTests =
-  []
-
-twoTests =
-  []
-
-runTests
-  :: (Show a, Eq b, Show b)
-  => String -> (a -> b) -> [(a, b)] -> IO Counts
-runTests name f ts =
-  runTestTT $ TestList $
-    zipWith TestLabel (map ((name ++) . show) [1..]) $
-      flip map ts $ \(input, expected) ->
-        TestCase $
-          assertEqual (show input) expected (f input)
+simplify :: Char -> [Char] -> [Char]
+simplify c
+  = filter ((/= c) . Char.toLower)
