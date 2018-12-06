@@ -1,8 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 module Main where
 
-import Test.HUnit
-
 import qualified Data.Char as Char
 import qualified Data.Set as Set
 import qualified Data.Map as Map
@@ -43,3 +41,8 @@ simplifications
 simplify :: Char -> [Char] -> [Char]
 simplify c
   = filter ((/= c) . Char.toLower)
+
+main = do
+  input <- readFile "input.txt"
+  print $ one input
+  print $ two input
